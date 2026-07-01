@@ -79,7 +79,7 @@
         @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: #00ff46 } }
         @keyframes fadeInText { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Core Login Input Box Group (Hidden during auto-login) */
+        /* Core Login Input Box Group */
         .login-box {
             display: none;
             background: #ffffff;
@@ -250,7 +250,7 @@
         .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-yes { background-color: #28a745; color: white; } .btn-no { background-color: #6c757d; color: white; } .btn-ok { background-color: #007bff; color: white; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+        @border-box-animation { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -558,12 +558,11 @@
         return deviceId;
     }
 
-    // New Streamlined Lifecycle Check
+    // FIXED: Streamlined Device Recognition & Verification
     window.onload = function() {
         const currentDeviceId = getDeviceID();
         initPercentageSelector();
         
-        // Configuration elements
         const spinner = document.getElementById('loginSpinner');
         const activationBox = document.getElementById('activationInputBox');
         const infoPara = document.getElementById('lockInfoText');
@@ -573,17 +572,20 @@
                                  `<span style="color:#666; font-size:12px;">(ဤ Device ID အတွက် Approved Key တောင်းယူပါ)</span>`;
         }
 
-        // SCENARIO 1: Alreading validated device -> Trigger directly Matrix Transition
-        if (localStorage.getItem("ksl_device_activated") === "true" && localStorage.getItem("ksl_used_key")) {
+        // CORRECT LOGIC: Must be explicit validated device AND have stored key to trigger autologin
+        const isActivated = localStorage.getItem("ksl_device_activated");
+        const hasUsedKey = localStorage.getItem("ksl_used_key");
+
+        if (isActivated === "true" && hasUsedKey) {
             spinner.style.display = 'block';
-            activationBox.style.display = 'none'; // Keep box away from UI entirely
-            
+            activationBox.style.display = 'none';
             setTimeout(() => {
                 runMatrixWelcomeAnimation();
             }, 1000);
-        } 
-        // SCENARIO 2: Brand new or unauthenticated device -> Request Activation Key Box
-        else {
+        } else {
+            // New device scenario -> Reset state explicitly & require activation key box
+            localStorage.removeItem("ksl_device_activated");
+            localStorage.removeItem("ksl_used_key");
             spinner.style.display = 'none';
             activationBox.style.display = 'block';
         }
@@ -594,7 +596,6 @@
         const currentDeviceId = getDeviceID();
         if (!inputKey) { alert("ကျေးဇူးပြု၍ Activation Key ရိုက်ထည့်ပေးပါဗျာ။"); return; }
 
-        // Transition elements during processing
         document.getElementById('activationInputBox').style.display = 'none';
         document.getElementById('loginSpinner').style.display = 'block';
 
@@ -618,7 +619,6 @@
         });
     }
 
-    // Matrix Sequence Handler
     function runMatrixWelcomeAnimation() {
         document.getElementById('loginSpinner').style.display = 'none';
         document.getElementById('activationInputBox').style.display = 'none';
@@ -626,7 +626,6 @@
         const matrixSection = document.getElementById('matrixWelcome');
         matrixSection.style.display = 'flex';
         
-        // Keep the Matrix terminal interface briefly for styling effect before entering app
         setTimeout(() => {
             const overlay = document.getElementById('loginOverlay');
             overlay.style.opacity = '0';
