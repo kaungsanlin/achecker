@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Age Checker & Multi-Tool</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Login Screen Overlay & Matrix Effect */
+        .login-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0d0d0d;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        /* Spin / Loading Component */
+        .loading-spinner {
+            border: 4px solid rgba(0, 255, 70, 0.1);
+            border-top: 4px solid #00ff46;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Matrix Welcome Screen CSS */
+        .matrix-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            width: 100%;
+        }
+        .matrix-text {
+            color: #00ff46;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px #00ff46, 0 0 20px #00ff46;
+            white-space: nowrap;
+            overflow: hidden;
+            border-right: 3px solid #00ff46;
+            animation: typing 1.5s steps(20, end), blink-caret 0.75s step-end infinite;
+            margin-bottom: 10px;
+        }
+        .matrix-sub {
+            color: #00aa2e;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            opacity: 0;
+            animation: fadeInText 1s ease-in forwards;
+            animation-delay: 1.2s;
+        }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+        @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: #00ff46 } }
+        @keyframes fadeInText { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Core Login Input Box Group (Hidden during auto-login) */
+        .login-box {
+            display: none;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+        }
+        .login-box h3 { margin-top: 0; color: #333; font-size: 20px; margin-bottom: 10px; }
+        .login-box p { font-size: 14px; color: #666; margin-bottom: 20px; line-height: 1.6; }
+        .login-box input {
+            width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px;
+            box-sizing: border-box; text-align: center; margin-bottom: 15px; font-weight: bold; letter-spacing: 1px;
+        }
+        .login-box input:focus { border-color: #007bff; outline: none; }
+        .login-btn {
+            width: 100%; background: #007bff; color: white; border: none; padding: 12px;
+            border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s;
+        }
+        .login-btn:hover { background: #0056b3; }
+
+        /* Menu Bar Styles */
+        .menu-btn {
+            background: #007bff; color: white;
+            border: none; padding: 10px 14px; border-radius: 6px; font-size: 20px; cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: background 0.2s;
+        }
+        .menu-btn:hover { background: #0056b3; }
+
+        .sidebar {
+            position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
+            background: #111; color: white; box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+            transition: left 0.3s ease; z-index: 1001; padding: 20px; box-sizing: border-box;
+        }
+        .sidebar.open { left: 0; }
+        .sidebar h3 { margin-top: 10px; border-bottom: 1px solid #333; padding-bottom: 15px; font-size: 20px; }
+        .sidebar ul { list-style: none; padding: 0; margin: 20px 0; }
+        .sidebar ul li { margin-bottom: 10px; }
+        .sidebar ul li a {
+            color: #ccc; text-decoration: none; font-size: 16px; display: block; padding: 12px 15px;
+            border-radius: 6px; transition: all 0.2s;
+        }
+        .sidebar ul li a:hover, .sidebar ul li a.active-menu { background: #007bff; color: white; }
+        .sidebar-close {
+            background: #333; color: white; border: none; padding: 8px 12px;
+            border-radius: 4px; cursor: pointer; float: right; font-size: 14px;
+        }
+        .sidebar-close:hover { background: #dc3545; }
+
+        .sidebar-overlay-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none; z-index: 1000;
+        }
+        .sidebar-overlay-bg.show { display: block; }
+
+        /* Main App & Section Containers */
+        .container {
+            display: none; background-color: #ffffff; padding: 30px; border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); width: 100%; max-width: 480px; position: relative;
+        }
+        .app-section { display: none; }
+        .app-section.active-section { display: block; }
+        
+        /* Fixed Header Area for Top Row Consistency */
+        .header-area { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
+        .header-left-group { display: flex; align-items: center; gap: 12px; }
+        h2 { margin: 0; color: #333; font-size: 22px; }
+        
+        .cal-toggle-btn {
+            background: #f0f4f8; border: 1px solid #d0e1fd; border-radius: 8px; padding: 8px 12px; cursor: pointer;
+            display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: bold; color: #007bff; transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .cal-toggle-btn:hover { background: #007bff; color: white; }
+
+        .type-selector { display: flex; justify-content: center; gap: 25px; margin-bottom: 20px; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .radio-label { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: bold; color: #4a5568; cursor: pointer; }
+        .radio-label input[type="radio"] { width: 18px; height: 18px; cursor: pointer; accent-color: #007bff; }
+
+        .tabs { display: flex; margin-bottom: 25px; border-bottom: 2px solid #ddd; }
+        .tab-btn { flex: 1; padding: 12px; background: none; border: none; font-size: 15px; font-weight: bold; color: #666; cursor: pointer; transition: all 0.3s ease; }
+        .tab-btn.active { color: #007bff; border-bottom: 3px solid #007bff; margin-bottom: -2px; }
+        .tab-btn.mm-active.active { color: #8c6239; border-bottom: 3px solid #8c6239; }
+        .calculator-form { display: none; }
+        .calculator-form.active { display: block; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; color: #4a4a4a; }
+        input[type="number"], select { width: 100%; padding: 12px; border: 1px solid #ccd1d9; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        .row { display: flex; gap: 10px; }
+        .col { flex: 1; }
+        .calc-btn { width: 100%; color: white; padding: 14px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: background 0.2s; }
+        #btn-en { background-color: #007bff; } #btn-en:hover { background-color: #0056b3; }
+        #btn-mm { background-color: #8c6239; } #btn-mm:hover { background-color: #6f4e2d; }
+        
+        .footer-credit { margin-top: 25px; font-size: 20px; color: black; letter-spacing: 0.5px; font-weight: 500; text-align: center; }
+
+        /* PERCENT FINDER STYLES */
+        .result-box {
+            margin-top: 20px; background: #e0f2fe; border-left: 5px solid #0284c7; padding: 15px; border-radius: 6px; font-size: 18px; font-weight: bold; color: #0369a1; text-align: center; display: none;
+        }
+
+        /* CASIO STYLE CALCULATOR DESIGN */
+        .casio-body { background: #2e3136; border-radius: 16px; padding: 15px; box-shadow: inset 0 2px 5px rgba(255,255,255,0.2), 0 10px 25px rgba(0,0,0,0.4); border: 4px solid #1e2022; }
+        .casio-screen-wrap { background: #a3b899; padding: 10px 12px; border-radius: 6px; border: 4px solid #222; margin-bottom: 15px; position: relative; box-shadow: inset 0 3px 10px rgba(0,0,0,0.5); }
+        .casio-indicators { display: flex; justify-content: space-between; font-family: monospace; font-size: 11px; color: #2b3a24; font-weight: bold; margin-bottom: 2px; min-height: 14px; }
+        .casio-display { font-family: 'Courier New', Courier, monospace; font-size: 32px; font-weight: bold; text-align: right; color: #1c2816; overflow: hidden; white-space: nowrap; text-shadow: 1px 1px 1px rgba(255,255,255,0.3); }
+        .casio-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+        .casio-btn { background: #3a3f44; color: #fff; border: none; border-radius: 6px; padding: 12px 2px; font-size: 13px; font-weight: bold; cursor: pointer; box-shadow: 0 3px #1a1c1e; transition: transform 0.05s, box-shadow 0.05s; text-align: center; }
+        .casio-btn:active { transform: translateY(2px); box-shadow: 0 1px #1a1c1e; }
+        .casio-btn.btn-top-row { background: #555e65; font-size: 10px; padding: 10px 1px; text-transform: uppercase; }
+        .casio-btn.btn-num { background: #eef2f5; color: #111; font-size: 18px; box-shadow: 0 3px #b2bac2; }
+        .casio-btn.btn-num:active { box-shadow: 0 1px #b2bac2; }
+        .casio-btn.btn-op { background: #fca311; color: #fff; font-size: 16px; box-shadow: 0 3px #b97504; }
+        .casio-btn.btn-op:active { box-shadow: 0 1px #b97504; }
+        .casio-btn.btn-clear { background: #d90429; color: #fff; font-size: 16px; box-shadow: 0 3px #8d021a; }
+        .casio-btn.btn-clear:active { box-shadow: 0 1px #8d021a; }
+        .casio-btn.btn-double { grid-column: span 1; }
+        .casio-btn.btn-plus { grid-row: span 2; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 20px; }
+
+        /* CONTACTS SECTION STYLE */
+        .contacts-list { display: flex; flex-direction: column; gap: 10px; max-height: 450px; overflow-y: auto; padding-right: 5px; }
+        .contact-item { display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border: 1px solid #e2e8f0; padding: 14px 18px; border-radius: 8px; text-decoration: none; color: #333; font-weight: bold; font-size: 16px; transition: all 0.2s ease; }
+        .contact-item:hover { background: #e0f2fe; border-color: #007bff; color: #007bff; transform: translateX(3px); }
+        .call-icon { background: #28a745; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px; }
+        .contact-item:hover .call-icon { background: #218838; }
+
+        /* ABOUT SECTION STYLE */
+        .about-wrap { text-align: center; line-height: 1.6; color: #444; }
+        .about-wrap h3 { color: #007bff; margin-bottom: 5px; }
+        .about-card { background: #f8f9fa; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; text-align: left; margin-top: 15px; }
+
+        /* POPUP & MODAL OVERLAYS */
+        .calendar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 20000; padding: 10px; box-sizing: border-box; }
+        .calendar-box { background: #222222; color: #ffffff; padding: 15px; border-radius: 12px; max-width: 440px; width: 100%; box-shadow: 0 5px 25px rgba(0,0,0,0.5); animation: fadeIn 0.2s ease-out; }
+        .calendar-title-banner { background: #3a3a3a; padding: 12px; text-align: center; border-radius: 8px; margin-bottom: 10px; border: 1px solid #4a4a4a; }
+        .cal-eng-title { font-size: 16px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; }
+        .cal-mm-title { font-size: 13px; color: #00fff0; margin-top: 5px; cursor: pointer; text-decoration: underline dashed; display: inline-block; padding: 2px 8px; border-radius: 4px; transition: background 0.2s; }
+        .cal-mm-title:hover { background: #4e4e4e; }
+        .mm-year-selector-wrap { display: none; margin-top: 5px; justify-content: center; align-items: center; gap: 8px; }
+        .mm-year-selector-wrap select { background: #111; color: #00fff0; border: 1px solid #00fff0; padding: 5px; font-size: 13px; border-radius: 4px; width: auto; font-weight: bold; }
+        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #2d2d2d; padding: 8px; border-radius: 8px; }
+        .calendar-nav select { background: #444; color: #fff; border: 1px solid #555; padding: 6px; font-size: 14px; width: auto; display: inline-block; border-radius: 4px; }
+        .nav-btn { background: #555; color: #fff; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; }
+        .nav-btn:hover { background: #007bff; }
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: bold; margin-bottom: 8px; color: #bbb; font-size: 12px; background: #2d2d2d; padding: 6px 0; border-radius: 4px; }
+        .weekdays div:first-child { color: #ff4d4d; } .weekdays div:last-child { color: #ffad33; }  
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #444; border: 1px solid #444; border-radius: 6px; overflow: hidden; }
+        .day-cell { background: #252525; padding: 8px 2px; cursor: pointer; min-height: 52px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 0.15s; }
+        .day-cell:hover { background: #007bff !important; }
+        .day-cell .eng-num { font-size: 15px; font-weight: bold; }
+        .day-cell .mm-num { font-size: 10px; color: #aaa; margin-top: 3px; }
+        .day-cell .mm-num.moon-up { color: #818cf8; } .day-cell .mm-num.moon-down { color: #fbbf24; } .day-cell .mm-num.moon-full { color: #f87171; font-weight: bold; } .day-cell .mm-num.moon-dark { color: #9ca3af; font-weight: bold; } 
+        .day-cell:hover .mm-num { color: #fff !important; }
+        .day-cell.empty { background: #1a1a1a; cursor: default; }
+        .day-cell.today { background: #1e293b; box-shadow: inset 0 0 0 2px #007bff; }
+        .day-cell.is-sun .eng-num { color: #ff4d4d; } .day-cell.is-sat .eng-num { color: #ffad33; }
+        .close-popup-btn { width: 100%; background: #dc3545; color: white; border: none; padding: 11px; border-radius: 6px; margin-top: 12px; font-weight: bold; cursor: pointer; font-size: 15px; }
+
+        /* RESULT POPUP */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px; box-sizing: border-box; }
+        .modal-box { background: #fff; padding: 25px; border-radius: 12px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); animation: fadeIn 0.2s ease-out; }
+        .modal-box h3 { margin-top: 0; font-size: 20px; margin-bottom: 15px; }
+        .status-pass { color: #28a745; } .status-fail { color: #dc3545; }
+        .modal-box p { color: #333; font-size: 16px; line-height: 1.7; margin-bottom: 22px; text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #ddd; }
+        .modal-buttons { display: flex; gap: 12px; }
+        .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-yes { background-color: #28a745; color: white; } .btn-no { background-color: #6c757d; color: white; } .btn-ok { background-color: #007bff; color: white; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+<div id="sidebarOverlay" class="sidebar-overlay-bg" onclick="toggleSidebar(false)"></div>
+<div id="sidebarMenu" class="sidebar">
+    <button class="sidebar-close" onclick="toggleSidebar(false)">ပိတ်မည်</button>
+    <h3>Menu Options</h3>
+    <ul>
+        <li><a href="#" id="menu-age" class="active-menu" onclick="switchSection('age-checker-section', 'menu-age')">Age Checker</a></li>
+        <li><a href="#" id="menu-mcix" onclick="triggerMCIX()">MCIX</a></li>
+        <li><a href="#" id="menu-calc" onclick="switchSection('calculator-section', 'menu-calc')">Calculator</a></li>
+        <li><a href="#" id="menu-percent" onclick="switchSection('percent-finder-section', 'menu-percent')">Percentage Finder</a></li>
+        <li><a href="#" id="menu-contact" onclick="switchSection('contact-section', 'menu-contact')">Contact</a></li>
+        <li><a href="#" id="menu-about" onclick="switchSection('about-section', 'menu-about')">About</a></li>
+    </ul>
+</div>
+
+<div id="loginOverlay" class="login-overlay">
+    <div id="loginSpinner" class="loading-spinner"></div>
+    
+    <div id="matrixWelcome" class="matrix-screen">
+        <div class="matrix-text">>> WELCOME BACK SYSTEM...</div>
+        <div class="matrix-sub">ACCESS GRANTED. DECRYPTING DATA...</div>
+    </div>
+
+    <div class="login-box" id="activationInputBox">
+        <h3>Device Lock စနစ်</h3>
+        <p id="lockInfoText">စစ်ဆေးနေပါသည်...</p>
+        <input type="password" id="userPhoneNumber" placeholder="Activation Key ကို ရိုက်ထည့်ပါ" autocomplete="off">
+        <button class="login-btn" onclick="validateAccess()">အကောင့်ဝင်မည်</button>
+    </div>
+</div>
+
+<div class="container" id="mainAppContainer">
+    
+    <div id="age-checker-section" class="app-section active-section">
+        <div class="header-area">
+            <div class="header-left-group">
+                <button class="menu-btn" onclick="toggleSidebar(true)">☰</button>
+                <h2>Age Calculator</h2>
+            </div>
+            <button class="cal-toggle-btn" onclick="toggleCalendar(true)">ပြက္ခဒိန်ကြည့်ရန်</button>
+        </div>
+        
+        <div class="type-selector">
+            <label class="radio-label"><input type="radio" name="appType" value="new" checked>အသစ် (၁၈ - ၆၂)</label>
+            <label class="radio-label"><input type="radio" name="appType" value="old">အဟောင်း (၁၈ - ၇၀)</label>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('english-tab', this, false)">Eng ပြက္ခဒိန်</button>
+            <button class="tab-btn" onclick="switchTab('myanmar-tab', this, true)">မြန်မာပြက္ခဒိန်</button>
+        </div>
+
+        <div id="english-tab" class="calculator-form active">
+            <div class="form-group">
+                <label for="enYear">မွေးသက္ကရာဇ်</label>
+                <input type="number" id="enYear" placeholder="ဥပမာ - 1994" min="1" max="2100" required>
+            </div>
+            <div class="form-group">
+                <label for="enMonth">မွေးလ</label>
+                <select id="enMonth">
+                    <option value="1">ဇန်နဝါရီ (January)</option><option value="2">ဖေဖော်ဝါရီ (February)</option><option value="3">မတ် (March)</option><option value="4">ဧပြီ (April)</option><option value="5">မေ (May)</option><option value="6">ဇွန် (June)</option><option value="7">ဇူလိုင် (July)</option><option value="8">သြဂုတ် (August)</option><option value="9">စက်တင်ဘာ (September)</option><option value="10">အောက်တိုဘာ (October)</option><option value="11">နိုဝင်ဘာ (November)</option><option value="12">ဒီဇင်ဘာ (December)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="enDay">မွေးရက် (ရက်စွဲ) </label>
+                <input type="number" id="enDay" placeholder="ဥပမာ - 9" min="1" max="31" required>
+            </div>
+            <button class="calc-btn" id="btn-en" onclick="calculateEnglishAge()">တွက်မည်</button>
+        </div>
+
+        <div id="myanmar-tab" class="calculator-form">
+            <div class="form-group">
+                <label for="mmYear">မွေးသက္ကရာဇ် </label>
+                <input type="number" id="mmYear" placeholder="ဥပမာ - ၁၃၅၆" min="1" max="1600" required>
+            </div>
+            <div class="form-group">
+                <label for="mmMonth">မွေးလ </label>
+                <select id="mmMonth">
+                    <option value="1">တန်ခူး</option><option value="2">ကဆုန်</option><option value="3">နယုန်</option><option value="4">ဝါဆို</option><option value="5">ဝါခေါင်</option><option value="6">တော်သလင်း</option><option value="7">သီတင်းကျွတ်</option><option value="8">တန်ဆောင်မုန်း</option><option value="9">နတ်တော်</option><option value="10">ပြာသို</option><option value="11">တပို့တွဲ</option><option value="12">တပေါင်း</option>
+                </select>
+            </div>
+            <div class="row">
+                <div class="col"><div class="form-group"><label for="moonPhase">လဆန်း/လဆုတ် </label><select id="moonPhase"><option value="1">လဆန်း</option><option value="2">လဆုတ်</option></select></div></div>
+                <div class="col"><div class="form-group"><label for="mmDay">ရက် (၁ မှ ၁၅) </label><input type="number" id="mmDay" min="1" max="15" value="1" required></div></div>
+            </div>
+            <button class="calc-btn" id="btn-mm" onclick="calculateMyanmarAge()">တွက်မည်</button>
+        </div>
+    </div>
+
+    <div id="calculator-section" class="app-section">
+        <div class="header-area">
+            <div class="header-left-group">
+                <button class="menu-btn" onclick="toggleSidebar(true)">☰</button>
+                <h2>Casio MJ-120D Plus</h2>
+            </div>
+        </div>
+        <div class="casio-body">
+            <div class="casio-screen-wrap">
+                <div class="casio-indicators">
+                    <span id="casio-step-label">001</span>
+                    <span id="casio-op-indicator"></span>
+                    <span id="casio-gt-indicator"></span>
+                </div>
+                <div id="casio-display" class="casio-display">0</div>
+            </div>
+            <div class="casio-grid">
+                <button class="casio-btn btn-top-row" onclick="casioCommand('disp')">DISP</button>
+                <button class="casio-btn btn-top-row" onclick="casioCommand('recheck')">RECHECK</button>
+                <button class="casio-btn btn-top-row" onclick="casioCommand('autoreview')">AUTO REVIEW</button>
+                <button class="casio-btn btn-top-row" onclick="casioCommand('correct')">CORRECT</button>
+                <button class="casio-btn btn-top-row" onclick="casioCommand('back')">CHECK BACK</button>
+                <button class="casio-btn btn-top-row" onclick="casioCommand('forward')">CHECK FW</button>
+                
+                <button class="casio-btn" onclick="casioCommand('taxplus')">TAX+</button>
+                <button class="casio-btn" onclick="casioCommand('taxminus')">TAX-</button>
+                <button class="casio-btn" onclick="casioCommand('percent')">%</button>
+                <button class="casio-btn" onclick="casioCommand('sqrt')">√</button>
+                <button class="casio-btn" onclick="casioCommand('mu')">MU</button>
+                <button class="casio-btn" onclick="casioCommand('gt')">GT</button>
+
+                <button class="casio-btn btn-clear" onclick="casioCommand('c')">C</button>
+                <button class="casio-btn btn-num" onclick="casioNum('7')">7</button>
+                <button class="casio-btn btn-num" onclick="casioNum('8')">8</button>
+                <button class="casio-btn btn-num" onclick="casioNum('9')">9</button>
+                <button class="casio-btn btn-op" onclick="casioOp('✖')">✖</button>
+                <button class="casio-btn btn-op" onclick="casioOp('➗')">➗</button>
+
+                <button class="casio-btn btn-clear" onclick="casioCommand('ac')">AC</button>
+                <button class="casio-btn btn-num" onclick="casioNum('4')">4</button>
+                <button class="casio-btn btn-num" onclick="casioNum('5')">5</button>
+                <button class="casio-btn btn-num" onclick="casioNum('6')">6</button>
+                <button class="casio-btn btn-op" onclick="casioOp('➖')">➖</button>
+                <button class="casio-btn btn-top-row" onclick="casioCommand('mrc')">MRC</button>
+
+                <button class="casio-btn btn-num" onclick="casioNum('0')">0</button>
+                <button class="casio-btn btn-num" onclick="casioNum('1')">1</button>
+                <button class="casio-btn btn-num" onclick="casioNum('2')">2</button>
+                <button class="casio-btn btn-num" onclick="casioNum('3')">3</button>
+                <button class="casio-btn btn-plus" style="grid-column: 5; grid-row: span 2;" onclick="casioOp('➕')">➕</button>
+                <button class="casio-btn btn-top-row" onclick="casioCommand('mminus')">M-</button>
+
+                <button class="casio-btn btn-num btn-double" onclick="casioNum('00')">00</button>
+                <button class="casio-btn btn-num" onclick="casioNum('.')">.</button>
+                <button class="casio-btn btn-op" style="grid-column: 3 / span 2;" onclick="casioEqual()">＝</button>
+                <button class="casio-btn btn-top-row" style="grid-column: 6;" onclick="casioCommand('mplus')">M+</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="percent-finder-section" class="app-section">
+        <div class="header-area">
+            <div class="header-left-group">
+                <button class="menu-btn" onclick="toggleSidebar(true)">☰</button>
+                <h2>Percentage Finder (%)</h2>
+            </div>
+        </div>
+        <div class="calculator-form active">
+            <div class="form-group">
+                <label for="pctNum1">ပထမကိန်းဂဏန်းကို ရွေးချယ်ပါ</label>
+                <select id="pctNum1" required></select>
+            </div>
+            <div class="form-group">
+                <label for="pctNum2">ဒုတိယကိန်းဂဏန်း (ဥပမာ - 500000)</label>
+                <input type="number" id="pctNum2" placeholder="နှိုင်းယှဉ်မည့် ကိန်းဂဏန်း ရိုက်ထည့်ပါ" required>
+            </div>
+            <button class="calc-btn" style="background-color: #0284c7;" onclick="findPercentage()">ရာခိုင်နှုန်း (%) ရှာမည်</button>
+            <div id="pctResultBox" class="result-box"></div>
+        </div>
+    </div>
+
+    <div id="contact-section" class="app-section">
+        <div class="header-area">
+            <div class="header-left-group">
+                <button class="menu-btn" onclick="toggleSidebar(true)">☰</button>
+                <h2>Contact List</h2>
+            </div>
+        </div>
+        <div class="contacts-list">
+            <a href="tel:09111111111" class="contact-item"><span>Name 1</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09222222222" class="contact-item"><span>Name 2</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09333333333" class="contact-item"><span>Name 3</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09444444444" class="contact-item"><span>Name 4</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09555555555" class="contact-item"><span>Name 5</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09666666666" class="contact-item"><span>Name 6</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09777777777" class="contact-item"><span>Name 7</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09888888888" class="contact-item"><span>Name 8</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09999999999" class="contact-item"><span>Name 9</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09101010101" class="contact-item"><span>Name 10</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09121212121" class="contact-item"><span>Name 11</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09131313131" class="contact-item"><span>Name 12</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09141414141" class="contact-item"><span>Name 13</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09151515151" class="contact-item"><span>Name 14</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09161616161" class="contact-item"><span>Name 15</span> <div class="call-icon">📞</div></a>
+        </div>
+    </div>
+
+    <div id="about-section" class="app-section">
+        <div class="header-area">
+            <div class="header-left-group">
+                <button class="menu-btn" onclick="toggleSidebar(true)">☰</button>
+                <h2>About Tool</h2>
+            </div>
+        </div>
+        <div class="about-wrap">
+            <h3>Age Checker & Calculator Pro</h3>
+            <p style="font-size: 14px; color:#666;">Version 2.6 (Built with Premium Features)</p>
+            <div class="about-card">
+                📌 <b>ပါဝင်သောစနစ်များ -</b><br>
+                • <b>Age Calculator:</b> အင်္ဂလိပ်/မြန်မာနှစ်သက်သလို တွက်နိုင်ပြီး (၁၈-၆၂) သို့မဟုတ် (၁၈-၇၀) စမတ်စနစ်ပါဝင်ခြင်း။<br>
+                • <b>MCIX Portal Fast Access:</b> ဝဘ်ဆိုက်သို့ အလွယ်တကူချိတ်ဆက်ပေးပြီး လျှို့ဝှက်နံပါတ်ပါ အလိုအလျောက်ကူးယူပေးခြင်း။<br>
+                • <b>Casio MJ-120D Plus Emulator:</b> 300 Steps Check/Correct စနစ်နှင့် % ရှာဖွေမှုစနစ် အပြည့်ပါဝင်ခြင်း။<br>
+                • <b>Percentage Finder:</b> ကိန်းဂဏန်းတစ်ခုသည် အခြားတစ်ခု၏ ဘယ်လောက် ရာခိုင်နှုန်းလဲဆိုတာကို သီးသန့်တွက်ချက်နိုင်ခြင်း။<br>
+                • <b>Contact List:</b> အရေးကြီးဖုန်းနံပါတ် ၁၅ ခုကို ကလစ်တစ်ချက်နှိပ်ရုံဖြင့် တိုက်ရိုက်ဖုန်းခေါ်ဆိုနိုင်ခြင်း။
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="calendarModal" class="calendar-overlay">
+    <div class="calendar-box">
+        <div class="calendar-title-banner">
+            <div id="calEngTitleText" class="cal-eng-title">JUNE 2026</div>
+            <div id="calMmTitleText" class="cal-mm-title" onclick="toggleMmYearSelector(true)">မြန်မာ - သက္ကရာဇ်</div>
+            <div id="mmYearSelectorWrap" class="mm-year-selector-wrap">
+                <select id="calMmYearSelect" onchange="handleMmYearChange()"></select>
+                <button class="nav-btn" style="padding: 3px 8px; font-size: 11px;" onclick="toggleMmYearSelector(false)">ပိတ်</button>
+            </div>
+        </div>
+        <div class="calendar-nav">
+            <button class="nav-btn" onclick="changeMonth(-1)">◀</button>
+            <div><select id="calYearSelect" onchange="updateCalendarView()"></select><select id="calMonthSelect" onchange="updateCalendarView()"></select></div>
+            <button class="nav-btn" onclick="changeMonth(1)">▶</button>
+        </div>
+        <div class="weekdays"><div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div></div>
+        <div id="calendarDaysGrid" class="days-grid"></div>
+        <button class="close-popup-btn" onclick="toggleCalendar(false)">ပိတ်မည်</button>
+    </div>
+</div>
+
+<div id="ageModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 id="modalTitle"></h3>
+        <p id="modalText"></p>
+        <div id="modalButtons" class="modal-buttons"></div>
+    </div>
+</div>
+
+<div class="footer-credit">## KSL ##</div>
+
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwYpZ7Xr3E_-0g0Ayn0TMpiSmKqRD_LfYXZzDsta6mDC3d2zn4J6a5Lb16IVd53j08qsQ/exec";
+    const MCIX_PASSWORD = "P@ssw0rd";
+    const CURRENT_VERSION = "2.0"; 
+    const VERSION_CHECK_URL = "https://raw.githubusercontent.com/kaungsanlin/Age-Calculator-/main/version.json";
+
+    let currentCalYear = 2026;
+    let currentCalMonth = 5;
+
+    const mmMonthsList = ["တန်ခူး", "ကဆုန်", "နယုန်", "ဝါဆို", "ဝါခေါင်", "တော်သလင်း", "သီတင်းကျွတ်", "တန်ဆောင်မုန်း", "နတ်တော်", "ပြာသို", "တပို့တွဲ", "တပေါင်း"];
+    const engMonthsFull = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
+
+    function toggleSidebar(show) {
+        document.getElementById('sidebarMenu').style.left = show ? '0px' : '-280px';
+        document.getElementById('sidebarOverlay').style.display = show ? 'block' : 'none';
+    }
+
+    function switchSection(sectionId, menuId) {
+        toggleSidebar(false);
+        document.querySelectorAll('.app-section').forEach(sec => sec.classList.remove('active-section'));
+        document.querySelectorAll('.sidebar ul li a').forEach(a => a.classList.remove('active-menu'));
+        document.getElementById(sectionId).classList.add('active-section');
+        document.getElementById(menuId).classList.add('active-menu');
+        if(sectionId !== 'percent-finder-section') document.getElementById("pctResultBox").style.display = "none";
+    }
+
+    function triggerMCIX() {
+        toggleSidebar(false);
+        navigator.clipboard.writeText(MCIX_PASSWORD).then(() => {
+            alert("MCIX Password ကို Copy ကူးပြီးပါပြီ။ Portal သို့ သွားပါမည်။");
+            window.open("https://live.mcixportal.com/login", "_blank");
+        }).catch(() => { window.open("https://live.mcixportal.com/login", "_blank"); });
+    }
+
+    function findPercentage() {
+        let n1 = parseFloat(document.getElementById("pctNum1").value);
+        let n2 = parseFloat(document.getElementById("pctNum2").value);
+        if (isNaN(n1) || isNaN(n2)) { alert("ကျေးဇူးပြု၍ ကိန်းဂဏန်းနှစ်ခုလုံးကို မှန်ကန်စွာ ရိုက်ထည့်ပေးပါဗျာ။"); return; }
+        if (n2 === 0) { alert("ဒုတိယကိန်းဂဏန်းသည် သုည (0) မဖြစ်ရပါဗျာ။"); return; }
+        let percentage = Math.round(((n1 / n2) * 100) * 10000) / 10000;
+        let resultBox = document.getElementById("pctResultBox");
+        resultBox.innerHTML = `ရလဒ်အဖြေ = <span style="font-size: 22px; color:#0284c7;">${percentage}%</span><br><span style="font-size:12px; color:#555; font-weight:normal;">(${n1} သည် ${n2} ၏ ${percentage} ရာခိုင်နှုန်း ဖြစ်ပါသည်)</span>`;
+        resultBox.style.display = "block";
+    }
+
+    function getDeviceID() {
+        let deviceId = localStorage.getItem("ksl_device_id");
+        if (!deviceId) {
+            deviceId = "KSL-" + Math.floor(1000 + Math.random() * 9000);
+            localStorage.setItem("ksl_device_id", deviceId);
+        }
+        return deviceId;
+    }
+
+    // New Streamlined Lifecycle Check
+    window.onload = function() {
+        const currentDeviceId = getDeviceID();
+        initPercentageSelector();
+        
+        // Configuration elements
+        const spinner = document.getElementById('loginSpinner');
+        const activationBox = document.getElementById('activationInputBox');
+        const infoPara = document.getElementById('lockInfoText');
+        
+        if (infoPara) {
+            infoPara.innerHTML = `<b>Device ID: <span style="color:#28a745;">${currentDeviceId}</span></b><br>` +
+                                 `<span style="color:#666; font-size:12px;">(ဤ Device ID အတွက် Approved Key တောင်းယူပါ)</span>`;
+        }
+
+        // SCENARIO 1: Alreading validated device -> Trigger directly Matrix Transition
+        if (localStorage.getItem("ksl_device_activated") === "true" && localStorage.getItem("ksl_used_key")) {
+            spinner.style.display = 'block';
+            activationBox.style.display = 'none'; // Keep box away from UI entirely
+            
+            setTimeout(() => {
+                runMatrixWelcomeAnimation();
+            }, 1000);
+        } 
+        // SCENARIO 2: Brand new or unauthenticated device -> Request Activation Key Box
+        else {
+            spinner.style.display = 'none';
+            activationBox.style.display = 'block';
+        }
+    };
+
+    function validateAccess() {
+        const inputKey = document.getElementById('userPhoneNumber').value.trim();
+        const currentDeviceId = getDeviceID();
+        if (!inputKey) { alert("ကျေးဇူးပြု၍ Activation Key ရိုက်ထည့်ပေးပါဗျာ။"); return; }
+
+        // Transition elements during processing
+        document.getElementById('activationInputBox').style.display = 'none';
+        document.getElementById('loginSpinner').style.display = 'block';
+
+        fetch(`${WEB_APP_URL}?key=${encodeURIComponent(inputKey)}&deviceId=${encodeURIComponent(currentDeviceId)}&action=check`)
+        .then(res => res.json())
+        .then(response => {
+            if (response.status === "invalid" || response.status === "used") {
+                alert(response.status === "invalid" ? "❌ ဤ Key သည် Register မလုပ်ရသေးပါ။" : "❌ ဤ Key သည် အခြားဖုန်းတစ်ခုတွင် အသုံးပြုပြီးဖြစ်သည်။");
+                document.getElementById('loginSpinner').style.display = 'none';
+                document.getElementById('activationInputBox').style.display = 'block';
+            } else if (response.status === "activated" || response.status === "matched") {
+                localStorage.setItem("ksl_used_key", inputKey);
+                localStorage.setItem("ksl_device_activated", "true");
+                runMatrixWelcomeAnimation();
+            }
+        })
+        .catch(() => {
+            alert("အင်တာနက်လိုင်း မကောင်းပါ သို့မဟုတ် Apps Script URL မှားယွင်းနေပါသည်ဗျာ။");
+            document.getElementById('loginSpinner').style.display = 'none';
+            document.getElementById('activationInputBox').style.display = 'block';
+        });
+    }
+
+    // Matrix Sequence Handler
+    function runMatrixWelcomeAnimation() {
+        document.getElementById('loginSpinner').style.display = 'none';
+        document.getElementById('activationInputBox').style.display = 'none';
+        
+        const matrixSection = document.getElementById('matrixWelcome');
+        matrixSection.style.display = 'flex';
+        
+        // Keep the Matrix terminal interface briefly for styling effect before entering app
+        setTimeout(() => {
+            const overlay = document.getElementById('loginOverlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                document.getElementById('mainAppContainer').style.display = 'block';
+                checkAppUpdate();
+                initCalendarSelects();
+            }, 500);
+        }, 2200);
+    }
+
+    function initPercentageSelector() {
+        const pSel = document.getElementById("pctNum1");
+        if(!pSel) return;
+        const numbers = [48200, 57900, 67500, 77200, 86900, 96500, 106200, 115800, 125400, 135100, 144700, 154400, 164100, 173700, 183400, 193000, 202700, 212300, 222000, 231600, 241200, 250900, 260500, 270200, 279900, 289500, 299200, 308800, 318400, 328200, 337800, 347400, 357100, 366700, 376400, 386100];
+        numbers.forEach(num => {
+            let opt = document.createElement("option");
+            opt.value = num; opt.textContent = num; pSel.appendChild(opt);
+        });
+    }
+
+    document.getElementById('userPhoneNumber').addEventListener('keypress', function(e) { if (e.key === 'Enter') validateAccess(); });
+
+    function checkAppUpdate() {
+        if(!VERSION_CHECK_URL || VERSION_CHECK_URL.includes("your-username")) return;
+        fetch(VERSION_CHECK_URL + "?v=" + new Date().getTime())
+            .then(res => res.json())
+            .then(data => { if (data.latestVersion !== CURRENT_VERSION) showUpdateModal(data.message, data.updateUrl); })
+            .catch(err => console.log(err));
+    }
+
+    function showUpdateModal(message, updateUrl) {
+        const modalHtml = `<div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:99999; display:flex; justify-content:center; align-items:center; padding:20px; box-sizing:border-box;"><div style="background:#fff; padding:25px; border-radius:12px; max-width:400px; width:100%; text-align:center;"><h3 style="color:#dc3545; margin-top:0;">ဗားရှင်းအသစ်ထွက်ရှိနေပါသည်</h3><p style="text-align:left;">${message}</p><a href="${updateUrl}" target="_blank" style="display:block; background:#28a745; color:#fff; padding:12px; border-radius:6px; font-weight:bold; text-decoration:none;">အပ်ဒိတ်လုပ်မည်</a></div></div>`;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+
+    // ==========================================
+    // CASIO MJ-120D PLUS ENGINE
+    // ==========================================
+    let casioCurrentInput = "0"; let casioPreviousInput = ""; let casioActiveOp = null; let casioHistory = []; let casioHistoryIndex = -1; let casioIsResultShown = false; let casioGrandTotal = 0; let casioMemory = 0; let casioTaxRate = 5; 
+
+    function casioRefreshScreen() {
+        let displayStr = casioCurrentInput; if(displayStr.length > 12) displayStr = displayStr.substring(0, 12);
+        document.getElementById("casio-display").textContent = displayStr;
+        let stepCount = casioHistory.length > 0 ? casioHistory.length : 1; if (casioHistoryIndex !== -1) stepCount = casioHistoryIndex + 1;
+        document.getElementById("casio-step-label").textContent = String(stepCount).padStart(3, '0');
+        document.getElementById("casio-op-indicator").textContent = casioActiveOp ? casioActiveOp : "";
+        document.getElementById("casio-gt-indicator").textContent = casioGrandTotal !== 0 ? "GT" : "";
+    }
+
+    function casioNum(num) {
+        if(casioIsResultShown) { casioCurrentInput = "0"; casioIsResultShown = false; }
+        if(num === "." && casioCurrentInput.includes(".")) return;
+        casioCurrentInput = (casioCurrentInput === "0" && num !== ".") ? num : casioCurrentInput + num;
+        casioRefreshScreen();
+    }
+
+    function casioOp(op) { casioActiveOp = op; casioPreviousInput = casioCurrentInput; casioIsResultShown = true; casioRefreshScreen(); }
+
+    function casioEqual() {
+        if (!casioActiveOp || !casioPreviousInput) return;
+        let v1 = parseFloat(casioPreviousInput); let v2 = parseFloat(casioCurrentInput); let res = 0;
+        switch(casioActiveOp) {
+            case '➕': res = v1 + v2; break; case '➖': res = v1 - v2; break; case '✖': res = v1 * v2; break; case '➗': res = v2 !== 0 ? v1 / v2 : 0; break;
+        }
+        casioHistory.push({text: `${v1} ${casioActiveOp} ${v2} = ${res}`, val: res});
+        casioHistoryIndex = casioHistory.length - 1; casioGrandTotal += res; casioCurrentInput = String(res); casioActiveOp = null; casioIsResultShown = true; casioRefreshScreen();
+    }
+
+    function casioCommand(cmd) {
+        if (cmd === 'ac') { casioCurrentInput = "0"; casioPreviousInput = ""; casioActiveOp = null; casioHistory = []; casioHistoryIndex = -1; casioGrandTotal = 0; } 
+        else if (cmd === 'c') { casioCurrentInput = "0"; } 
+        else if (cmd === 'gt') { casioCurrentInput = String(casioGrandTotal); casioIsResultShown = true; } 
+        else if (cmd === 'back' && casioHistoryIndex > 0) { casioHistoryIndex--; let r = casioHistory[casioHistoryIndex]; alert(`Step ${casioHistoryIndex + 1}: ${r.text}`); casioCurrentInput = String(r.val); } 
+        else if (cmd === 'forward' && casioHistoryIndex < casioHistory.length - 1) { casioHistoryIndex++; let r = casioHistory[casioHistoryIndex]; alert(`Step ${casioHistoryIndex + 1}: ${r.text}`); casioCurrentInput = String(r.val); } 
+        else if (cmd === 'autoreview') {
+            if(casioHistory.length === 0) return; let idx = 0;
+            let interval = setInterval(() => { if(idx < casioHistory.length) { casioCurrentInput = String(casioHistory[idx].val); casioHistoryIndex = idx; casioRefreshScreen(); idx++; } else clearInterval(interval); }, 1000);
+        } else if (cmd === 'correct') {
+            let newVal = prompt("တန်ဖိုးအသစ် ပြောင်းလဲသတ်မှတ်ပါ -", casioCurrentInput);
+            if(newVal !== null && !isNaN(newVal)) { casioCurrentInput = newVal; if(casioHistoryIndex !== -1 && casioHistory[casioHistoryIndex]) casioHistory[casioHistoryIndex].val = parseFloat(newVal); }
+        } else if (cmd === 'taxplus') { casioCurrentInput = String(parseFloat(casioCurrentInput) * (1 + casioTaxRate/100)); casioIsResultShown = true; } 
+        else if (cmd === 'taxminus') { casioCurrentInput = String(parseFloat(casioCurrentInput) * (1 - casioTaxRate/100)); casioIsResultShown = true; } 
+        else if (cmd === 'sqrt') { casioCurrentInput = String(Math.sqrt(parseFloat(casioCurrentInput))); casioIsResultShown = true; } 
+        else if (cmd === 'percent') {
+            if (casioActiveOp === '✖' && casioPreviousInput) {
+                let res = (parseFloat(casioPreviousInput) / parseFloat(casioCurrentInput)) * 100;
+                casioHistory.push({text: `${casioPreviousInput} ✖ ${casioCurrentInput}% = ${res}%`, val: res});
+                casioHistoryIndex = casioHistory.length - 1; casioCurrentInput = String(res); casioActiveOp = null; casioIsResultShown = true;
+            } else { casioCurrentInput = String(parseFloat(casioCurrentInput) / 100); casioIsResultShown = true; }
+        } else if (cmd === 'mplus') { casioMemory += parseFloat(casioCurrentInput); casioIsResultShown = true; } 
+        else if (cmd === 'mminus') { casioMemory -= parseFloat(casioCurrentInput); casioIsResultShown = true; } 
+        else if (cmd === 'mrc') { casioCurrentInput = String(casioMemory); casioIsResultShown = true; }
+        casioRefreshScreen();
+    }
+
+    // ==========================================
+    // CALENDAR & AGE LOGIC
+    // ==========================================
+    function initCalendarSelects() {
+        const yearSelect = document.getElementById('calYearSelect'); const monthSelect = document.getElementById('calMonthSelect'); const mmYearSelect = document.getElementById('calMmYearSelect');
+        yearSelect.innerHTML = ""; mmYearSelect.innerHTML = ""; monthSelect.innerHTML = "";
+        for (let y = 1930; y <= 2045; y++) { let opt = document.createElement('option'); opt.value = y; opt.textContent = y; yearSelect.appendChild(opt); }
+        for (let my = 1292; my <= 2407; my++) { let opt = document.createElement('option'); opt.value = my; opt.textContent = my + " ခု"; mmYearSelect.appendChild(opt); }
+        const enMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        enMonths.forEach((m, idx) => { let opt = document.createElement('option'); opt.value = idx; opt.textContent = m; monthSelect.appendChild(opt); });
+        const today = new Date(); currentCalYear = today.getFullYear(); currentCalMonth = today.getMonth();
+        yearSelect.value = currentCalYear; monthSelect.value = currentCalMonth;
+    }
+
+    function toggleCalendar(show) { document.getElementById('calendarModal').style.display = show ? 'flex' : 'none'; if (show) { toggleMmYearSelector(false); updateCalendarView(); } }
+    function toggleMmYearSelector(show) {
+        const textEl = document.getElementById('calMmTitleText'); const selectWrap = document.getElementById('mmYearSelectorWrap');
+        if (show) { textEl.style.display = 'none'; selectWrap.style.display = 'flex'; let currentMmYear = currentCalYear - 638; if (currentCalMonth < 3) currentMmYear--; document.getElementById('calMmYearSelect').value = currentMmYear; } 
+        else { textEl.style.display = 'inline-block'; selectWrap.style.display = 'none'; }
+    }
+
+    function handleMmYearChange() {
+        currentCalYear = parseInt(document.getElementById('calMmYearSelect').value) + 638; if (currentCalMonth < 3) currentCalYear++;
+        document.getElementById('calYearSelect').value = currentCalYear; toggleMmYearSelector(false); updateCalendarView();
+    }
+
+    function changeMonth(direction) {
+        currentCalMonth += direction; if (currentCalMonth > 11) { currentCalMonth = 0; currentCalYear++; } else if (currentCalMonth < 0) { currentCalMonth = 11; currentCalYear--; }
+        document.getElementById('calYearSelect').value = currentCalYear; document.getElementById('calMonthSelect').value = currentCalMonth; toggleMmYearSelector(false); updateCalendarView();
+    }
+
+    function updateCalendarView() {
+        currentCalYear = parseInt(document.getElementById('calYearSelect').value); currentCalMonth = parseInt(document.getElementById('calMonthSelect').value);
+        const grid = document.getElementById('calendarDaysGrid'); grid.innerHTML = '';
+        document.getElementById('calEngTitleText').textContent = `${engMonthsFull[currentCalMonth]} ${currentCalYear}`;
+        let estMy = currentCalYear - 638; if (currentCalMonth < 3) estMy--;
+        document.getElementById('calMmTitleText').textContent = `${estMy} ခု ${mmMonthsList[currentCalMonth]} - ${mmMonthsList[(currentCalMonth + 1) % 12]}`;
+        const firstDayIndex = new Date(currentCalYear, currentCalMonth, 1).getDay(); const totalDays = new Date(currentCalYear, currentCalMonth + 1, 0).getDate(); const todayDate = new Date();
+        for (let i = 0; i < firstDayIndex; i++) { let emptyCell = document.createElement('div'); emptyCell.className = 'day-cell empty'; grid.appendChild(emptyCell); }
+        for (let day = 1; day <= totalDays; day++) {
+            let cell = document.createElement('div'); cell.className = 'day-cell';
+            let cwd = new Date(currentCalYear, currentCalMonth, day).getDay();
+            if (cwd === 0) cell.classList.add('is-sun'); if (cwd === 6) cell.classList.add('is-sat');
+            if (currentCalYear === todayDate.getFullYear() && currentCalMonth === todayDate.getMonth() && day === todayDate.getDate()) cell.classList.add('today');
+            let mmDayNum = day % 15 === 0 ? 15 : day % 15;
+            let phaseClass = "", phaseText = "";
+            if (day === 15) { phaseText = "လပြည့်"; phaseClass = "moon-full"; } 
+            else if (day === totalDays) { phaseText = "လကွယ်"; phaseClass = "moon-dark"; } 
+            else if (day < 15) { phaseText = `လဆန်း ${mmDayNum}`; phaseClass = "moon-up"; } 
+            else { phaseText = `လဆုတ် ${mmDayNum}`; phaseClass = "moon-down"; }
+            cell.innerHTML = `<div class="eng-num">${day}</div><div class="mm-num ${phaseClass}">${phaseText}</div>`;
+            cell.onclick = () => { toggleCalendar(false); document.getElementById('enYear').value = currentCalYear; document.getElementById('enMonth').value = currentCalMonth + 1; document.getElementById('enDay').value = day; calculateEnglishAge(); };
+            grid.appendChild(cell);
+        }
+    }
+
+    function showSmartPopup(years, months, days, infoText) {
+        const modal = document.getElementById('ageModal'); const titleEl = document.getElementById('modalTitle'); const textEl = document.getElementById('modalText'); const buttonsEl = document.getElementById('modalButtons'); const boxEl = document.querySelector('.modal-box p');
+        const selectedType = document.querySelector('input[name="appType"]:checked').value;
+        let maxAgeLimit = (selectedType === 'old') ? 70 : 62; 
+        let typeLabel = (selectedType === 'old') ? "သတ်မှတ်ချက် (၁၈ - ၇၀) နှစ်" : "သတ်မှတ်ချက် (၁၈ - ၆၂) နှစ်";
+        let ageResultHtml = `<b>အသက်တွက်ချက်မှုရလဒ် [${typeLabel}] -</b><br>` + infoText + `<br>` + `• လက်ရှိအသက် - <b>${years} နှစ်၊ ${months} လ၊ ${days} ရက်</b>`;
+        let isOverAge = years > maxAgeLimit || (years === maxAgeLimit && (months > 0 || days > 0));
+
+        if (years >= 18 && !isOverAge) {
+            titleEl.className = "status-pass"; titleEl.innerHTML = "အောင်မြင်ပါသည်"; boxEl.style.borderLeftColor = "#28a745";
+            textEl.innerHTML = ageResultHtml + `<hr style="border:0; border-top:1px dashed #ddd; margin:12px 0;"><span style="color:#1e3a8a; font-weight:bold;">MCIX သို့ သွားမည်လား (Password အလိုအလျောက် Copy ကူးပေးမည်)</span>`;
+            buttonsEl.innerHTML = `<button class="modal-btn btn-yes" onclick="handlePopupChoice(true)">Yes (သွားမည်)</button><button class="modal-btn btn-no" onclick="handlePopupChoice(false)">No (မသွားပါ)</button>`;
+        } else {
+            titleEl.className = "status-fail"; boxEl.style.borderLeftColor = "#dc3545";
+            titleEl.innerHTML = isOverAge ? `အသက်ကျော်လွန်နေပါသည် (အသက် ${maxAgeLimit} နှစ်ထက်ကျော်နေပါသည်)` : "အသက်မပြည့်သေးပါ (အသက် ၁၈ နှစ်အောက်ဖြစ်နေပါသည်)";
+            textEl.innerHTML = ageResultHtml + `<hr style="border:0; border-top:1px dashed #ddd; margin:12px 0;"><span style="color:#dc3545; font-weight:bold;">စည်းကမ်းချက်နှင့် မကိုက်ညီပါ (အသက် ၁၈ မှ ${maxAgeLimit} အတွင်းသာ ဖြစ်ရပါမည်)</span>`;
+            buttonsEl.innerHTML = `<button class="modal-btn btn-ok" onclick="handlePopupChoice(false)">OK (သိပါပြီ)</button>`;
+        }
+        modal.style.display = 'flex';
+    }
+
+    function handlePopupChoice(goToMcix) { document.getElementById('ageModal').style.display = 'none'; if (goToMcix) triggerMCIX(); }
+    function switchTab(tabId, btn, isMm) {
+        document.querySelectorAll('.calculator-form').forEach(form => form.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(tBtn => tBtn.classList.remove('active', 'mm-active'));
+        document.getElementById(tabId).classList.add('active'); btn.classList.add('active'); if(isMm) btn.classList.add('mm-active');
+    }
+
+    function calculateEnglishAge() {
+        const year = parseInt(document.getElementById('enYear').value); const month = parseInt(document.getElementById('enMonth').value); const day = parseInt(document.getElementById('enDay').value);
+        if (!year || !day || isNaN(month)) { alert("ကျေးဇူးပြု၍ မွေးသက္ကရာဇ် အပြည့်အစုံ ဖြည့်စွက်ပေးပါဗျာ။"); return; }
+        const dob = new Date(year, month - 1, day); const today = new Date(); if (dob > today) { alert("မွေးသက္ကရာဇ်သည် ယနေ့ထက် ကြီးနေ၍ မရပါဗျာ။"); return; }
+        let years = today.getFullYear() - dob.getFullYear(); let months = today.getMonth() - dob.getMonth(); let days = today.getDate() - dob.getDate();
+        if (days < 0) { months--; days += new Date(today.getFullYear(), today.getMonth(), 0).getDate(); } if (months < 0) { years--; months += 12; }
+        showSmartPopup(years, months, days, `• မွေးသက္ကရာဇ် - <b>${year} ခုနှစ်၊ ${document.getElementById('enMonth').options[month-1].text}၊ ${day} ရက်</b>`);
+    }
+
+    function calculateMyanmarAge() {
+        const birthYear = parseInt(document.getElementById('mmYear').value); const birthMonth = parseInt(document.getElementById('mmMonth').value); const birthPhase = parseInt(document.getElementById('moonPhase').value); const birthDay = parseInt(document.getElementById('mmDay').value);
+        if (!birthYear || !birthDay) { alert("ကျေးဇူးပြု၍ မွေးသက္ကရာဇ် အပြည့်အစုံ ဖြည့်စွက်ပေးပါဗျာ။"); return; }
+        const current = { year: 1388, month: 6, phase: (new Date().getDate() > 15) ? 2 : 1, day: new Date().getDate() % 15 === 0 ? 15 : new Date().getDate() % 15 };
+        if (birthYear > current.year) { alert("မွေးသက္ကရာဇ်သည် ယနေ့ထက် ကြီးနေ၍ မရပါဗျာ။"); return; }
+        let years = current.year - birthYear; let months = current.month - birthMonth; let days = current.day - birthDay;
+        if (days < 0) { months--; days += 15; } if (months < 0) { years--; months += 12; } if (birthYear === 1326 && years < 62) years = 62;
+        showSmartPopup(years, months, days, `• မွေးသက္ကရာဇ် - <b>မြန်မာသက္ကရာဇ် ${birthYear} ခု၊ ${document.getElementById('mmMonth').options[birthMonth-1].text} ${(birthPhase === 1 ? 'လဆန်း' : 'လဆုတ်')} ${birthDay} ရက်</b>`);
+    }
+</script>
+
+</body>
+</html>
