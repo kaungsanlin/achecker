@@ -45,6 +45,18 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* Loading Text Style */
+        .loading-text {
+            color: #00ff46;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            text-align: center;
+            display: none; /* စကတည်းက ဖျောက်ထားမယ် */
+        }
+
         /* Matrix Welcome Screen CSS */
         .matrix-screen {
             display: none;
@@ -271,6 +283,7 @@
 
 <div id="loginOverlay" class="login-overlay">
     <div id="loginSpinner" class="loading-spinner"></div>
+    <div id="loadingStatusText" class="loading-text">Login Checking Your Key...</div>
     
     <div id="matrixWelcome" class="matrix-screen">
         <div class="matrix-text">>> WELCOME BACK SYSTEM...</div>
@@ -558,12 +571,13 @@
         return deviceId;
     }
 
-    // FIXED FIXED: Real-time Database Check on every launch
+    // UPDATED LOGIC: ဒုတိယအကြိမ်ဝင်ရောက်မှုတွင် "Login Checking Your Key..." ပြသမည့်စနစ်
     window.onload = function() {
         const currentDeviceId = getDeviceID();
         initPercentageSelector();
         
         const spinner = document.getElementById('loginSpinner');
+        const statusText = document.getElementById('loadingStatusText');
         const activationBox = document.getElementById('activationInputBox');
         const infoPara = document.getElementById('lockInfoText');
         
@@ -575,19 +589,19 @@
         const isActivated = localStorage.getItem("ksl_device_activated");
         const hasUsedKey = localStorage.getItem("ksl_used_key");
 
-        // အကယ်၍ ဖုန်းထဲမှာ Key သိမ်းထားပြီးသားရှိရင် တန်းမပေးဝင်သေးဘဲ Google Sheet မှာ ရှိသေးလားဆိုတာ လှမ်းစစ်မယ်
+        // ဒုတိယအကြိမ် (Key အရင်ထည့်ဖူးပြီးသားဖြစ်လျှင်)
         if (isActivated === "true" && hasUsedKey) {
             spinner.style.display = 'block';
+            statusText.style.display = 'block'; // "Login Checking Your Key..." ကို ပြသမယ်
             activationBox.style.display = 'none';
 
             fetch(`${WEB_APP_URL}?key=${encodeURIComponent(hasUsedKey)}&deviceId=${encodeURIComponent(currentDeviceId)}&action=check`)
             .then(res => res.json())
             .then(response => {
-                // အကယ်၍ Sheet ထဲကနေ ဖျက်လိုက်လို့ status က invalid သို့မဟုတ် used ဖြစ်သွားခဲ့ရင် Lock ပြန်ချမယ်
+                statusText.style.display = 'none'; // စစ်ဆေးပြီးရင် စာသားကို ပြန်ဖျောက်မယ်
                 if (response.status === "activated" || response.status === "matched") {
                     runMatrixWelcomeAnimation();
                 } else {
-                    // Google Sheet ထဲမှာ Key မရှိတော့ရင် LocalStorage ကို အကုန်ဖျက်ပြီး Key ပြန်တောင်းမယ်
                     localStorage.removeItem("ksl_device_activated");
                     localStorage.removeItem("ksl_used_key");
                     spinner.style.display = 'none';
@@ -596,12 +610,13 @@
                 }
             })
             .catch(() => {
-                // အင်တာနက်ပြတ်တောက်သွားရင် အရင်ဝင်ထားဖူးတာမို့ ယာယီပေးဝင်ထားမယ်
+                statusText.style.display = 'none';
                 runMatrixWelcomeAnimation();
             });
         } else {
-            // Key လုံးဝမရှိသေးတဲ့ Device အသစ်ဆိုရင် Form တန်းပြမယ်
+            // ပထမအကြိမ် (Key လုံးဝမရှိသေးလျှင်) - စာသားဖျောက်ပြီး Form တန်းပြမယ်
             spinner.style.display = 'none';
+            statusText.style.display = 'none';
             activationBox.style.display = 'block';
         }
     };
@@ -613,6 +628,7 @@
 
         document.getElementById('activationInputBox').style.display = 'none';
         document.getElementById('loginSpinner').style.display = 'block';
+        document.getElementById('loadingStatusText').style.display = 'none'; // ပထမအကြိမ် Key Submit လုပ်ချိန်မှာ စာသားမလိုလို့ ဖျောက်ထားမယ်
 
         fetch(`${WEB_APP_URL}?key=${encodeURIComponent(inputKey)}&deviceId=${encodeURIComponent(currentDeviceId)}&action=check`)
         .then(res => res.json())
@@ -636,6 +652,7 @@
 
     function runMatrixWelcomeAnimation() {
         document.getElementById('loginSpinner').style.display = 'none';
+        document.getElementById('loadingStatusText').style.display = 'none';
         document.getElementById('activationInputBox').style.display = 'none';
         
         const matrixSection = document.getElementById('matrixWelcome');
