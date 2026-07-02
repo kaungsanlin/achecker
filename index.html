@@ -263,9 +263,29 @@
         .btn-yes { background-color: #28a745; color: white; } .btn-no { background-color: #6c757d; color: white; } .btn-ok { background-color: #007bff; color: white; }
 
         @border-box-animation { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+
+        /* NEW: MAINTENANCE SCREEN STYLE */
+        .maintenance-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #1e293b; color: #fff; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            z-index: 999999; padding: 30px; box-sizing: border-box; text-align: center;
+        }
+        .maintenance-box { background: #ffffff; color: #333; padding: 35px 25px; border-radius: 16px; max-width: 400px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+        .maintenance-icon { font-size: 50px; margin-bottom: 15px; color: #f59e0b; }
+        .maintenance-box h2 { color: #1e293b; font-size: 24px; margin-bottom: 12px; font-weight: bold; }
+        .maintenance-box p { color: #64748b; font-size: 15px; line-height: 1.6; margin-bottom: 0; }
     </style>
 </head>
 <body>
+
+<div id="maintenanceOverlay" class="maintenance-overlay">
+    <div class="maintenance-box">
+        <div class="maintenance-icon">⚙️</div>
+        <h2>Server Maintenance</h2>
+        <p>စနစ်အား အဆင့်မြှင့်တင်ပြင်ဆင်နေပါသဖြင့် ခေတ္တအသုံးပြု၍ မရသေးပါ။ ခေတ္တစောင့်ဆိုင်းပြီးမှ ပြန်လည်အသုံးပြုပေးပါဗျာ။</p>
+    </div>
+</div>
 
 <div id="sidebarOverlay" class="sidebar-overlay-bg" onclick="toggleSidebar(false)"></div>
 <div id="sidebarMenu" class="sidebar">
@@ -445,21 +465,22 @@
             </div>
         </div>
         <div class="contacts-list">
-            <a href="tel:09111111111" class="contact-item"><span>Name 1</span> <div class="call-icon">📞</div></a>
-            <a href="tel:09222222222" class="contact-item"><span>Name 2</span> <div class="call-icon">📞</div></a>
-            <a href="tel:09333333333" class="contact-item"><span>Name 3</span> <div class="call-icon">📞</div></a>
-            <a href="tel:09444444444" class="contact-item"><span>Name 4</span> <div class="call-icon">📞</div></a>
-            <a href="tel:09555555555" class="contact-item"><span>Name 5</span> <div class="call-icon">📞</div></a>
-            <a href="tel:09666666666" class="contact-item"><span>Name 6</span> <div class="call-icon">📞</div></a>
-            <a href="tel:09777777777" class="contact-item"><span>Name 7</span> <div class="call-icon">📞</div></a>
-            <a href="tel:09888888888" class="contact-item"><span>Name 8</span> <div class="call-icon">📞</div></a>
-            <a href="tel:09999999999" class="contact-item"><span>Name 9</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09263092022" class="contact-item"><span>BM</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09776468874" class="contact-item"><span>DBM 2</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09740871432" class="contact-item"><span>FA</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09940948307" class="contact-item"><span>CO</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09788896529" class="contact-item"><span>KTMM</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09750337391" class="contact-item"><span>KSL</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09791693709" class="contact-item"><span>WPP</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09777721422" class="contact-item"><span> ATW</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09781504526" class="contact-item"><span>ACM </span> <div class="call-icon">📞</div></a>
+            <a href="tel:09768954608" class="contact-item"><span>ZMH</span> <div class="call-icon">📞</div></a>
+            <a href="tel:09760276433" class="contact-item"><span>TPO</span> <div class="call-icon">📞</div></a>
             <a href="tel:09101010101" class="contact-item"><span>Name 10</span> <div class="call-icon">📞</div></a>
             <a href="tel:09121212121" class="contact-item"><span>Name 11</span> <div class="call-icon">📞</div></a>
             <a href="tel:09131313131" class="contact-item"><span>Name 12</span> <div class="call-icon">📞</div></a>
             <a href="tel:09141414141" class="contact-item"><span>Name 13</span> <div class="call-icon">📞</div></a>
-            <a href="tel:09151515151" class="contact-item"><span>Name 14</span> <div class="call-icon">📞</div></a>
-            <a href="tel:09161616161" class="contact-item"><span>Name 15</span> <div class="call-icon">📞</div></a>
+            
         </div>
     </div>
 
@@ -571,7 +592,7 @@
         return deviceId;
     }
 
-    // UPDATED LOGIC: ဒုတိယအကြိမ်ဝင်ရောက်မှုတွင် "Login Checking Your Key..." ပြသမည့်စနစ်
+    // UPDATED LOGIC: Maintenance Check + Device Lock System
     window.onload = function() {
         const currentDeviceId = getDeviceID();
         initPercentageSelector();
@@ -586,19 +607,27 @@
                                  `<span style="color:#666; font-size:12px;">(ဤ Device ID အတွက် Approved Key တောင်းယူပါ)</span>`;
         }
 
+        // စကတည်းက Spinner နဲ့ စာသားကို ပြထားမယ်
+        spinner.style.display = 'block';
+        statusText.style.display = 'block';
+        activationBox.style.display = 'none';
+
+        // WEB_APP_URL ထံမှ Maintenance Status နှင့် Key ကို တစ်ခါတည်း စစ်ဆေးခြင်း
         const isActivated = localStorage.getItem("ksl_device_activated");
-        const hasUsedKey = localStorage.getItem("ksl_used_key");
+        const hasUsedKey = localStorage.getItem("ksl_used_key") || "";
 
-        // ဒုတိယအကြိမ် (Key အရင်ထည့်ဖူးပြီးသားဖြစ်လျှင်)
-        if (isActivated === "true" && hasUsedKey) {
-            spinner.style.display = 'block';
-            statusText.style.display = 'block'; // "Login Checking Your Key..." ကို ပြသမယ်
-            activationBox.style.display = 'none';
+        fetch(`${WEB_APP_URL}?key=${encodeURIComponent(hasUsedKey)}&deviceId=${encodeURIComponent(currentDeviceId)}&action=check`)
+        .then(res => res.json())
+        .then(response => {
+            // NEW: Maintenance Mode အရင်စစ်မယ်
+            if (response.maintenance === true || response.maintenance === "true") {
+                document.getElementById("maintenanceOverlay").style.display = "flex";
+                return; // အောက်က အလုပ်တွေကို ဆက်မလုပ်တော့ဘဲ ရပ်လိုက်မယ်
+            }
 
-            fetch(`${WEB_APP_URL}?key=${encodeURIComponent(hasUsedKey)}&deviceId=${encodeURIComponent(currentDeviceId)}&action=check`)
-            .then(res => res.json())
-            .then(response => {
-                statusText.style.display = 'none'; // စစ်ဆေးပြီးရင် စာသားကို ပြန်ဖျောက်မယ်
+            statusText.style.display = 'none';
+
+            if (isActivated === "true" && hasUsedKey) {
                 if (response.status === "activated" || response.status === "matched") {
                     runMatrixWelcomeAnimation();
                 } else {
@@ -608,17 +637,21 @@
                     activationBox.style.display = 'block';
                     alert("⚠️ သင်၏ Activation Key ကို စနစ်အတွင်းမှ ဖျက်သိမ်းလိုက်သဖြင့် Key အသစ် ပြန်လည်ရိုက်ထည့်ပေးရပါမည်။");
                 }
-            })
-            .catch(() => {
-                statusText.style.display = 'none';
-                runMatrixWelcomeAnimation();
-            });
-        } else {
-            // ပထမအကြိမ် (Key လုံးဝမရှိသေးလျှင်) - စာသားဖျောက်ပြီး Form တန်းပြမယ်
-            spinner.style.display = 'none';
+            } else {
+                spinner.style.display = 'none';
+                activationBox.style.display = 'block';
+            }
+        })
+        .catch(() => {
+            // အင်တာနက်လိုင်းမကောင်းရင် သို့မဟုတ် Server Error တက်ရင် ပုံမှန်အတိုင်း Login ဝင်ခွင့်ပေးမယ်
             statusText.style.display = 'none';
-            activationBox.style.display = 'block';
-        }
+            if (isActivated === "true" && hasUsedKey) {
+                runMatrixWelcomeAnimation();
+            } else {
+                spinner.style.display = 'none';
+                activationBox.style.display = 'block';
+            }
+        });
     };
 
     function validateAccess() {
@@ -628,11 +661,17 @@
 
         document.getElementById('activationInputBox').style.display = 'none';
         document.getElementById('loginSpinner').style.display = 'block';
-        document.getElementById('loadingStatusText').style.display = 'none'; // ပထမအကြိမ် Key Submit လုပ်ချိန်မှာ စာသားမလိုလို့ ဖျောက်ထားမယ်
+        document.getElementById('loadingStatusText').style.display = 'none'; 
 
         fetch(`${WEB_APP_URL}?key=${encodeURIComponent(inputKey)}&deviceId=${encodeURIComponent(currentDeviceId)}&action=check`)
         .then(res => res.json())
         .then(response => {
+            // Key လာစစ်ချိန်မှာလည်း Maintenance ဖြစ်နေရင် တားဆီးမယ်
+            if (response.maintenance === true || response.maintenance === "true") {
+                document.getElementById("maintenanceOverlay").style.display = "flex";
+                return;
+            }
+
             if (response.status === "invalid" || response.status === "used") {
                 alert(response.status === "invalid" ? "❌ ဤ Key သည် Register မလုပ်ရသေးပါ။" : "❌ ဤ Key သည် အခြားဖုန်းတစ်ခုတွင် အသုံးပြုပြီးဖြစ်သည်။");
                 document.getElementById('loginSpinner').style.display = 'none';
