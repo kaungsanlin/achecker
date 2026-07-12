@@ -54,7 +54,7 @@
             letter-spacing: 1px;
             margin-top: 10px;
             text-align: center;
-            display: none; /* စကတည်းက ဖျောက်ထားမယ် */
+            display: none;
         }
 
         /* Matrix Welcome Screen CSS */
@@ -225,6 +225,25 @@
         .about-wrap h3 { color: #007bff; margin-bottom: 5px; }
         .about-card { background: #f8f9fa; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; text-align: left; margin-top: 15px; }
 
+        /* --- MCIX DETAILED DESKTOP IFRAME CONTAINER --- */
+        .iframe-wrapper {
+            width: 100%;
+            height: 500px;
+            overflow: auto;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            position: relative;
+            background: #fff;
+            -webkit-overflow-scrolling: touch;
+        }
+        .iframe-desktop-force {
+            width: 1280px;
+            height: 1428px;
+            border: none;
+            transform: scale(0.32); /* Mobile view ထဲမှာ 1280px screen ဆန့်အောင် ချုံ့ချခြင်း */
+            transform-origin: 0 0;
+        }
+
         /* POPUP & MODAL OVERLAYS */
         .calendar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 20000; padding: 10px; box-sizing: border-box; }
         .calendar-box { background: #222222; color: #ffffff; padding: 15px; border-radius: 12px; max-width: 440px; width: 100%; box-shadow: 0 5px 25px rgba(0,0,0,0.5); animation: fadeIn 0.2s ease-out; }
@@ -262,9 +281,7 @@
         .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-yes { background-color: #28a745; color: white; } .btn-no { background-color: #6c757d; color: white; } .btn-ok { background-color: #007bff; color: white; }
 
-        @border-box-animation { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
-
-        /* NEW: MAINTENANCE SCREEN STYLE */
+        /* MAINTENANCE SCREEN STYLE */
         .maintenance-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #1e293b; color: #fff; display: none;
@@ -293,7 +310,7 @@
     <h3>Menu Options</h3>
     <ul>
         <li><a href="#" id="menu-age" class="active-menu" onclick="switchSection('age-checker-section', 'menu-age')">Age Checker</a></li>
-        <li><a href="#" id="menu-mcix" onclick="triggerMCIX()">MCIX</a></li>
+        <li><a href="#" id="menu-mcix" onclick="switchSection('mcix-section', 'menu-mcix'); triggerMCIXPasswordCopy();">MCIX Portal</a></li>
         <li><a href="#" id="menu-calc" onclick="switchSection('calculator-section', 'menu-calc')">Calculator</a></li>
         <li><a href="#" id="menu-percent" onclick="switchSection('percent-finder-section', 'menu-percent')">Percentage Finder</a></li>
         <li><a href="#" id="menu-contact" onclick="switchSection('contact-section', 'menu-contact')">Contact</a></li>
@@ -374,6 +391,19 @@
             </div>
             <button class="calc-btn" id="btn-mm" onclick="calculateMyanmarAge()">တွက်မည်</button>
         </div>
+    </div>
+
+    <div id="mcix-section" class="app-section">
+        <div class="header-area">
+            <div class="header-left-group">
+                <button class="menu-btn" onclick="toggleSidebar(true)">☰</button>
+                <h2>MCIX Portal (Desktop View)</h2>
+            </div>
+        </div>
+        <div class="iframe-wrapper">
+            <iframe src="https://live.mcixportal.com/login" class="iframe-desktop-force"></iframe>
+        </div>
+        <p style="font-size:12px; color:#666; margin-top:8px; text-align:center;">💡 Password ကို Clipboard ထဲသို့ အလိုအလျောက် Copy ကူးယူပေးထားပြီးပါပြီ။</p>
     </div>
 
     <div id="calculator-section" class="app-section">
@@ -480,7 +510,6 @@
             <a href="tel:09121212121" class="contact-item"><span>Name 11</span> <div class="call-icon">📞</div></a>
             <a href="tel:09131313131" class="contact-item"><span>Name 12</span> <div class="call-icon">📞</div></a>
             <a href="tel:09141414141" class="contact-item"><span>Name 13</span> <div class="call-icon">📞</div></a>
-            
         </div>
     </div>
 
@@ -497,7 +526,7 @@
             <div class="about-card">
                 📌 <b>ပါဝင်သောစနစ်များ -</b><br>
                 • <b>Age Calculator:</b> အင်္ဂလိပ်/မြန်မာနှစ်သက်သလို တွက်နိုင်ပြီး (၁၈-၆၂) သို့မဟုတ် (၁၈-၇၀) စမတ်စနစ်ပါဝင်ခြင်း။<br>
-                • <b>MCIX Portal Fast Access:</b> ဝဘ်ဆိုက်သို့ အလွယ်တကူချိတ်ဆက်ပေးပြီး လျှို့ဝှက်နံပါတ်ပါ အလိုအလျောက်ကူးယူပေးခြင်း။<br>
+                • <b>MCIX Portal In-App Access:</b> Window အသစ်ဖွင့်စရာမလိုဘဲ App ထဲမှာတင် Desktop Layout အတိုင်း တစ်ခါတည်း တိုက်ရိုက်အသုံးပြုနိုင်ခြင်း။<br>
                 • <b>Casio MJ-120D Plus Emulator:</b> 300 Steps Check/Correct စနစ်နှင့် % ရှာဖွေမှုစနစ် အပြည့်ပါဝင်ခြင်း။<br>
                 • <b>Percentage Finder:</b> ကိန်းဂဏန်းတစ်ခုသည် အခြားတစ်ခု၏ ဘယ်လောက် ရာခိုင်နှုန်းလဲဆိုတာကို သီးသန့်တွက်ချက်နိုင်ခြင်း။<br>
                 • <b>Contact List:</b> အရေးကြီးဖုန်းနံပါတ် ၁၅ ခုကို ကလစ်တစ်ချက်နှိပ်ရုံဖြင့် တိုက်ရိုက်ဖုန်းခေါ်ဆိုနိုင်ခြင်း။
@@ -564,12 +593,13 @@
         if(sectionId !== 'percent-finder-section') document.getElementById("pctResultBox").style.display = "none";
     }
 
-    function triggerMCIX() {
-        toggleSidebar(false);
+    // MCIX နှိပ်လိုက်ရင် Password ကို Background ကနေ Copy အလိုအလျောက်လုပ်ပေးမယ့် Function
+    function triggerMCIXPasswordCopy() {
         navigator.clipboard.writeText(MCIX_PASSWORD).then(() => {
-            alert("MCIX Password ကို Copy ကူးပြီးပါပြီ။ Portal သို့ သွားပါမည်။");
-            window.open("https://live.mcixportal.com/login", "_blank");
-        }).catch(() => { window.open("https://live.mcixportal.com/login", "_blank"); });
+            console.log("MCIX Password copied to clipboard automatically.");
+        }).catch(() => {
+            console.log("Clipboard copy failed.");
+        });
     }
 
     function findPercentage() {
@@ -592,7 +622,6 @@
         return deviceId;
     }
 
-    // UPDATED LOGIC: Maintenance Check + Device Lock System
     window.onload = function() {
         const currentDeviceId = getDeviceID();
         initPercentageSelector();
@@ -607,22 +636,19 @@
                                  `<span style="color:#666; font-size:12px;">(ဤ Device ID အတွက် Approved Key တောင်းယူပါ)</span>`;
         }
 
-        // စကတည်းက Spinner နဲ့ စာသားကို ပြထားမယ်
         spinner.style.display = 'block';
         statusText.style.display = 'block';
         activationBox.style.display = 'none';
 
-        // WEB_APP_URL ထံမှ Maintenance Status နှင့် Key ကို တစ်ခါတည်း စစ်ဆေးခြင်း
         const isActivated = localStorage.getItem("ksl_device_activated");
         const hasUsedKey = localStorage.getItem("ksl_used_key") || "";
 
         fetch(`${WEB_APP_URL}?key=${encodeURIComponent(hasUsedKey)}&deviceId=${encodeURIComponent(currentDeviceId)}&action=check`)
         .then(res => res.json())
         .then(response => {
-            // NEW: Maintenance Mode အရင်စစ်မယ်
             if (response.maintenance === true || response.maintenance === "true") {
                 document.getElementById("maintenanceOverlay").style.display = "flex";
-                return; // အောက်က အလုပ်တွေကို ဆက်မလုပ်တော့ဘဲ ရပ်လိုက်မယ်
+                return; 
             }
 
             statusText.style.display = 'none';
@@ -643,7 +669,6 @@
             }
         })
         .catch(() => {
-            // အင်တာနက်လိုင်းမကောင်းရင် သို့မဟုတ် Server Error တက်ရင် ပုံမှန်အတိုင်း Login ဝင်ခွင့်ပေးမယ်
             statusText.style.display = 'none';
             if (isActivated === "true" && hasUsedKey) {
                 runMatrixWelcomeAnimation();
@@ -666,7 +691,6 @@
         fetch(`${WEB_APP_URL}?key=${encodeURIComponent(inputKey)}&deviceId=${encodeURIComponent(currentDeviceId)}&action=check`)
         .then(res => res.json())
         .then(response => {
-            // Key လာစစ်ချိန်မှာလည်း Maintenance ဖြစ်နေရင် တားဆီးမယ်
             if (response.maintenance === true || response.maintenance === "true") {
                 document.getElementById("maintenanceOverlay").style.display = "flex";
                 return;
@@ -871,7 +895,14 @@
         modal.style.display = 'flex';
     }
 
-    function handlePopupChoice(goToMcix) { document.getElementById('ageModal').style.display = 'none'; if (goToMcix) triggerMCIX(); }
+    function handlePopupChoice(goToMcix) { 
+        document.getElementById('ageModal').style.display = 'none'; 
+        if (goToMcix) {
+            switchSection('mcix-section', 'menu-mcix');
+            triggerMCIXPasswordCopy();
+        } 
+    }
+    
     function switchTab(tabId, btn, isMm) {
         document.querySelectorAll('.calculator-form').forEach(form => form.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(tBtn => tBtn.classList.remove('active', 'mm-active'));
         document.getElementById(tabId).classList.add('active'); btn.classList.add('active'); if(isMm) btn.classList.add('mm-active');
