@@ -54,7 +54,7 @@
             letter-spacing: 1px;
             margin-top: 10px;
             text-align: center;
-            display: none;
+            display: none; /* စကတည်းက ဖျောက်ထားမယ် */
         }
 
         /* Matrix Welcome Screen CSS */
@@ -201,6 +201,7 @@
         .casio-indicators { display: flex; justify-content: space-between; font-family: monospace; font-size: 11px; color: #2b3a24; font-weight: bold; margin-bottom: 2px; min-height: 14px; }
         .casio-display { font-family: 'Courier New', Courier, monospace; font-size: 32px; font-weight: bold; text-align: right; color: #1c2816; overflow: hidden; white-space: nowrap; text-shadow: 1px 1px 1px rgba(255,255,255,0.3); }
         .casio-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+        .casio-grid button { display: flex; justify-content: center; align-items: center; }
         .casio-btn { background: #3a3f44; color: #fff; border: none; border-radius: 6px; padding: 12px 2px; font-size: 13px; font-weight: bold; cursor: pointer; box-shadow: 0 3px #1a1c1e; transition: transform 0.05s, box-shadow 0.05s; text-align: center; }
         .casio-btn:active { transform: translateY(2px); box-shadow: 0 1px #1a1c1e; }
         .casio-btn.btn-top-row { background: #555e65; font-size: 10px; padding: 10px 1px; text-transform: uppercase; }
@@ -224,25 +225,6 @@
         .about-wrap { text-align: center; line-height: 1.6; color: #444; }
         .about-wrap h3 { color: #007bff; margin-bottom: 5px; }
         .about-card { background: #f8f9fa; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; text-align: left; margin-top: 15px; }
-
-        /* --- MCIX DETAILED DESKTOP IFRAME CONTAINER --- */
-        .iframe-wrapper {
-            width: 100%;
-            height: 500px;
-            overflow: auto;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            position: relative;
-            background: #fff;
-            -webkit-overflow-scrolling: touch;
-        }
-        .iframe-desktop-force {
-            width: 1280px;
-            height: 1428px;
-            border: none;
-            transform: scale(0.32); /* Mobile view ထဲမှာ 1280px screen ဆန့်အောင် ချုံ့ချခြင်း */
-            transform-origin: 0 0;
-        }
 
         /* POPUP & MODAL OVERLAYS */
         .calendar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 20000; padding: 10px; box-sizing: border-box; }
@@ -281,7 +263,9 @@
         .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-yes { background-color: #28a745; color: white; } .btn-no { background-color: #6c757d; color: white; } .btn-ok { background-color: #007bff; color: white; }
 
-        /* MAINTENANCE SCREEN STYLE */
+        @border-box-animation { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+
+        /* NEW: MAINTENANCE SCREEN STYLE */
         .maintenance-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #1e293b; color: #fff; display: none;
@@ -292,6 +276,13 @@
         .maintenance-icon { font-size: 50px; margin-bottom: 15px; color: #f59e0b; }
         .maintenance-box h2 { color: #1e293b; font-size: 24px; margin-bottom: 12px; font-weight: bold; }
         .maintenance-box p { color: #64748b; font-size: 15px; line-height: 1.6; margin-bottom: 0; }
+
+        /* NUMBER TO WORD SPECIFIC STYLE */
+        .word-result-container {
+            background-color: #f0fdf4; padding: 15px; border-radius: 6px; border-left: 5px solid #16a34a;
+            min-height: 50px; display: flex; align-items: center; justify-content: center; word-break: break-word; margin-top: 20px;
+        }
+        #wordResult { font-size: 18px; font-weight: bold; color: #14532d; margin: 0; text-align: center; }
     </style>
 </head>
 <body>
@@ -310,9 +301,10 @@
     <h3>Menu Options</h3>
     <ul>
         <li><a href="#" id="menu-age" class="active-menu" onclick="switchSection('age-checker-section', 'menu-age')">Age Checker</a></li>
-        <li><a href="#" id="menu-mcix" onclick="switchSection('mcix-section', 'menu-mcix'); triggerMCIXPasswordCopy();">MCIX Portal</a></li>
+        <li><a href="#" id="menu-mcix" onclick="triggerMCIX()">MCIX</a></li>
         <li><a href="#" id="menu-calc" onclick="switchSection('calculator-section', 'menu-calc')">Calculator</a></li>
         <li><a href="#" id="menu-percent" onclick="switchSection('percent-finder-section', 'menu-percent')">Percentage Finder</a></li>
+        <li><a href="#" id="menu-numtoword" onclick="switchSection('num-to-word-section', 'menu-numtoword')">Number to Word</a></li>
         <li><a href="#" id="menu-contact" onclick="switchSection('contact-section', 'menu-contact')">Contact</a></li>
         <li><a href="#" id="menu-about" onclick="switchSection('about-section', 'menu-about')">About</a></li>
     </ul>
@@ -391,19 +383,6 @@
             </div>
             <button class="calc-btn" id="btn-mm" onclick="calculateMyanmarAge()">တွက်မည်</button>
         </div>
-    </div>
-
-    <div id="mcix-section" class="app-section">
-        <div class="header-area">
-            <div class="header-left-group">
-                <button class="menu-btn" onclick="toggleSidebar(true)">☰</button>
-                <h2>MCIX Portal (Desktop View)</h2>
-            </div>
-        </div>
-        <div class="iframe-wrapper">
-            <iframe src="https://live.mcixportal.com/login" class="iframe-desktop-force"></iframe>
-        </div>
-        <p style="font-size:12px; color:#666; margin-top:8px; text-align:center;">💡 Password ကို Clipboard ထဲသို့ အလိုအလျောက် Copy ကူးယူပေးထားပြီးပါပြီ။</p>
     </div>
 
     <div id="calculator-section" class="app-section">
@@ -487,6 +466,24 @@
         </div>
     </div>
 
+    <div id="num-to-word-section" class="app-section">
+        <div class="header-area">
+            <div class="header-left-group">
+                <button class="menu-btn" onclick="toggleSidebar(true)">☰</button>
+                <h2>Number to Word</h2>
+            </div>
+        </div>
+        <div class="calculator-form active">
+            <div class="form-group">
+                <label for="digitInput">ကိန်းဂဏန်းတစ်ခုခု ရိုက်ထည့်ပါ</label>
+                <input type="number" id="digitInput" placeholder="ဥပမာ - 1250" oninput="liveConvertNumberToWords()">
+            </div>
+            <div class="word-result-container">
+                <p id="wordResult">ရလဒ်ကို ဤနေရာတွင် ပြပါမည်...</p>
+            </div>
+        </div>
+    </div>
+
     <div id="contact-section" class="app-section">
         <div class="header-area">
             <div class="header-left-group">
@@ -510,6 +507,7 @@
             <a href="tel:09121212121" class="contact-item"><span>Name 11</span> <div class="call-icon">📞</div></a>
             <a href="tel:09131313131" class="contact-item"><span>Name 12</span> <div class="call-icon">📞</div></a>
             <a href="tel:09141414141" class="contact-item"><span>Name 13</span> <div class="call-icon">📞</div></a>
+            
         </div>
     </div>
 
@@ -525,10 +523,11 @@
             <p style="font-size: 14px; color:#666;">Version 2.6 (Built with Premium Features)</p>
             <div class="about-card">
                 📌 <b>ပါဝင်သောစနစ်များ -</b><br>
-                • <b>Age Calculator:</b> အင်္ဂလိပ်/မြန်မာနှစ်သက်သလို တွက်နိုင်ပြီး (၁၈-၆၂) သို့မဟုတ် (၁၈-၇၀) စမတ်စနစ်ပါဝင်ခြင်း။<br>
-                • <b>MCIX Portal In-App Access:</b> Window အသစ်ဖွင့်စရာမလိုဘဲ App ထဲမှာတင် Desktop Layout အတိုင်း တစ်ခါတည်း တိုက်ရိုက်အသုံးပြုနိုင်ခြင်း။<br>
-                • <b>Casio MJ-120D Plus Emulator:</b> 300 Steps Check/Correct စနစ်နှင့် % ရှာဖွေမှုစနစ် အပြည့်ပါဝင်ခြင်း။<br>
-                • <b>Percentage Finder:</b> ကိန်းဂဏန်းတစ်ခုသည် အခြားတစ်ခု၏ ဘယ်လောက် ရာခိုင်နှုန်းလဲဆိုတာကို သီးသန့်တွက်ချက်နိုင်ခြင်း။<br>
+                • <b>Age Calculator:</b> အင်္ဂလိပ်/မြန်မာနှစ်သက်သလို တွက်နိုင်ပြီး (၁၈-၆၂) သို့မဟုတ် (၁၈-၇၀) စမတ်စနစ်ပါဝင်ခြင်း。<br>
+                • <b>MCIX Portal Fast Access:</b> ဝဘ်ဆိုက်သို့ အလွယ်တကူချိတ်ဆက်ပေးပြီး လျှို့ဝှက်နံပါတ်ပါ အလိုအလျောက်ကူးယူပေးခြင်း。<br>
+                • <b>Casio MJ-120D Plus Emulator:</b> 300 Steps Check/Correct စနစ်နှင့် % ရှာဖွေမှုစနစ် အပြည့်ပါဝင်ခြင်း。<br>
+                • <b>Percentage Finder:</b> ကိန်းဂဏန်းတစ်ခုသည် အခြားတစ်ခု၏ ဘယ်လောက် ရာခိုင်နှုန်းလဲဆိုတာကို သီးသန့်တွက်ချက်နိုင်ခြင်း संकेत<br>
+                • <b>Number to Word:</b> ရိုက်ထည့်လိုက်သော ကိန်းဂဏန်းများကို စာသားအဖြစ် အလိုအလျောက် ပြောင်းလဲပေးခြင်း။<br>
                 • <b>Contact List:</b> အရေးကြီးဖုန်းနံပါတ် ၁၅ ခုကို ကလစ်တစ်ချက်နှိပ်ရုံဖြင့် တိုက်ရိုက်ဖုန်းခေါ်ဆိုနိုင်ခြင်း။
             </div>
         </div>
@@ -593,12 +592,14 @@
         if(sectionId !== 'percent-finder-section') document.getElementById("pctResultBox").style.display = "none";
     }
 
-    // MCIX နှိပ်လိုက်ရင် Password ကို Background ကနေ Copy အလိုအလျောက်လုပ်ပေးမယ့် Function
-    function triggerMCIXPasswordCopy() {
+    // UPDATED: Desktop View အဖြစ် force ပွင့်စေရန် window features များ ထည့်သွင်းထားသည်
+    function triggerMCIX() {
+        toggleSidebar(false);
         navigator.clipboard.writeText(MCIX_PASSWORD).then(() => {
-            console.log("MCIX Password copied to clipboard automatically.");
-        }).catch(() => {
-            console.log("Clipboard copy failed.");
+            alert("MCIX Password ကို Copy ကူးပြီးပါပြီ။ Portal သို့ သွားပါမည်။");
+            window.open("https://live.mcixportal.com/login", "_blank", "width=1280,height=800,resizable=yes,scrollbars=yes");
+        }).catch(() => { 
+            window.open("https://live.mcixportal.com/login", "_blank", "width=1280,height=800,resizable=yes,scrollbars=yes"); 
         });
     }
 
@@ -648,7 +649,7 @@
         .then(response => {
             if (response.maintenance === true || response.maintenance === "true") {
                 document.getElementById("maintenanceOverlay").style.display = "flex";
-                return; 
+                return;
             }
 
             statusText.style.display = 'none';
@@ -895,14 +896,7 @@
         modal.style.display = 'flex';
     }
 
-    function handlePopupChoice(goToMcix) { 
-        document.getElementById('ageModal').style.display = 'none'; 
-        if (goToMcix) {
-            switchSection('mcix-section', 'menu-mcix');
-            triggerMCIXPasswordCopy();
-        } 
-    }
-    
+    function handlePopupChoice(goToMcix) { document.getElementById('ageModal').style.display = 'none'; if (goToMcix) triggerMCIX(); }
     function switchTab(tabId, btn, isMm) {
         document.querySelectorAll('.calculator-form').forEach(form => form.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(tBtn => tBtn.classList.remove('active', 'mm-active'));
         document.getElementById(tabId).classList.add('active'); btn.classList.add('active'); if(isMm) btn.classList.add('mm-active');
@@ -925,6 +919,71 @@
         let years = current.year - birthYear; let months = current.month - birthMonth; let days = current.day - birthDay;
         if (days < 0) { months--; days += 15; } if (months < 0) { years--; months += 12; } if (birthYear === 1326 && years < 62) years = 62;
         showSmartPopup(years, months, days, `• မွေးသက္ကရာဇ် - <b>မြန်မာသက္ကရာဇ် ${birthYear} ခု၊ ${document.getElementById('mmMonth').options[birthMonth-1].text} ${(birthPhase === 1 ? 'လဆန်း' : 'လဆုတ်')} ${birthDay} ရက်</b>`);
+    }
+
+    // ==========================================
+    // NUMBER TO WORD CONVERTER ENGINE
+    // ==========================================
+    function liveConvertNumberToWords() {
+        const inputVal = document.getElementById('digitInput').value;
+        const resultElement = document.getElementById('wordResult');
+
+        if (inputVal === '') {
+            resultElement.innerText = 'ရလဒ်ကို ဤနေရာတွင် ပြပါမည်...';
+            return;
+        }
+
+        const num = parseInt(inputVal, 10);
+        
+        if (isNaN(num)) {
+            resultElement.innerText = 'မှန်ကန်သော ကိန်းဂဏန်းတစ်ခု ထည့်သွင်းပါ';
+        } else if (Math.abs(num) > 999999999999999) {
+            resultElement.innerText = 'ကိန်းဂဏန်း အရမ်းကြီးမားလွန်းနေပါသည်';
+        } else {
+            resultElement.innerText = internalNumberToWordsEngine(num);
+        }
+    }
+
+    function internalNumberToWordsEngine(num) {
+        if (num === 0) return 'Zero';
+
+        const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 
+                     'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+        const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        const scales = ['', 'Thousand', 'Million', 'Billion', 'Trillion'];
+
+        let words = '';
+        let scaleIndex = 0;
+
+        function convertLessThanThousand(n) {
+            let str = '';
+            if (n >= 100) {
+                str += ones[Math.floor(n / 100)] + ' Hundred ';
+                n %= 100;
+            }
+            if (n >= 20) {
+                str += tens[Math.floor(n / 10)] + ' ';
+                n %= 10;
+            }
+            if (n > 0) {
+                str += ones[n] + ' ';
+            }
+            return str.trim();
+        }
+
+        let tempNum = Math.abs(num);
+        
+        while (tempNum > 0) {
+            let chunk = tempNum % 1000;
+            if (chunk > 0) {
+                let chunkWords = convertLessThanThousand(chunk);
+                words = chunkWords + ' ' + scales[scaleIndex] + ' ' + words;
+            }
+            tempNum = Math.floor(tempNum / 1000);
+            scaleIndex++;
+        }
+
+        return (num < 0 ? 'Minus ' : '') + words.trim();
     }
 </script>
 
